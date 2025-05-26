@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "tailwind.config": [
+        "./tailwind.config.js"
+      ]
+    }
+  },
+  "exclude": [
+    "node_modules"
+  ],
+  "extends": "expo/tsconfig.base",
+  "resolveJsonModule": true,
+  "esModuleInterop": true,
+}

@@ -1,0 +1,16 @@
+# Dependency directories
+node_modules/
+
+# Yarn lockfile
+yarn.lock
+
+# Pack log files
+pack.log
+
+# Optional: macOS & IDE-related
+.DS_Store
+.idea/
+.vscode/
+
+# Optional: Logs
+*.log
