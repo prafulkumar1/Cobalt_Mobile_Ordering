@@ -34,6 +34,10 @@ export {  ConnectedCbButton,
   ConnectedCbVStack, 
   ConnectedCbForm, 
   ConnectedCbFlatList, 
-  ConnectedCbImage  } from '@/components/cobalt/ui'
+  ConnectedCbImage,
+  ConnectedCbHeader,
+  ConnectedCbText,
+  ConnectedCbBox 
+} from '@/components/cobalt/ui'
 
 

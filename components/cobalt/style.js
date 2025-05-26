@@ -525,4 +525,25 @@ CheckIcon:{color:"#ffff"},
   backArrowIcon:{height:15,width:15,resizeMode:"contain"},
   closeIcon:{height:12,width:12,resizeMode:"contain"},
   closeIconBtn:{height:30,width:30,justifyContent:"center",alignItems:"center" },
+
+  headerTitle:{
+    fontSize: 20,
+    color: "#4B5154",
+    fontFamily: 'SourceSansPro_SemiBold',
+  },
+  headerLeftContainer:{flexDirection:"row",justifyContent:"center",alignItems:"center",alignSelf:"center"},
+  headerMainContainer:{
+    flexDirection:"row",
+    justifyContent:"space-between",
+    alignItems:"center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    backgroundColor:"#fff",
+    elevation: 5,
+    width:"100%",
+    paddingTop:isPlatformAndroid? responsiveHeight(5) : responsiveHeight(5),
+  },
+  headerSubContainer:{flexDirection:"row",justifyContent:"space-between",alignItems:"center",paddingBottom:10,width:"100%",paddingHorizontal:15}
 })

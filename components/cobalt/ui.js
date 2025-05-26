@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlatList, ImageBackground, Image, TouchableOpacity, View, Alert, Animated, Modal, Pressable, } from 'react-native';
+import { FlatList, ImageBackground, Image, TouchableOpacity, View, Alert, Animated, Modal, Pressable, SafeAreaView, } from 'react-native';
 import {
   FormControl,
   FormControlError,
@@ -22,33 +22,9 @@ import { postApiCall } from '@/components/utlis/api';
 import { getFormFieldData, getFormFieldDataSelector, setFormFieldData } from '../redux/reducers/loginReducer';
 import { connect } from 'react-redux';
 import { SvgUri } from 'react-native-svg';
-class CbImage extends React.Component {
-  constructor(props) {
-    super(props);
-    // this.id=props.id;
-    this.source = props.source || "";
-    this.imageJsx = props.imageJsx;
-    this.style = props.style || "";
-  }
-
-  render() {
-    const jsx = this.imageJsx;
-    const source = this.source;
-
-    if (source) {
-
-      if (source.endsWith('.svg')) {
-
-        return <SvgUri  uri={source}/>;
-      } else {
- 
-        return <Image alt='image' source={{ uri: source }} style={this.style} />;
-      }
-    } else {
-      return jsx;
-    }
-  }
-}
+import { loadPageConfigurations } from '../redux/reducers/ProfitCenterReducer';
+import { transformStyles } from '../constants/Matrices';
+import {styles} from "@/components/cobalt/style"
  
 class cbButton extends React.Component {
   constructor(props) {
@@ -401,6 +377,324 @@ class CbFlatList extends React.Component {
   }
 }
 
+
+class CbHeader extends React.Component {
+  timer = null;
+  constructor(props) {
+    super(props);
+    this.id = props.id;
+    this.pageID = props.pageId;
+    this.Conditionalstyle = props.Conditionalstyle || {};
+    this.styles = props.style || {};
+    this.source = props.source;
+    this.headerTitle = props.headerTitle;
+    this.goBack = typeof props.goBack === "function" ? props.goBack : () => {};
+    this.goHome = typeof props.goHome === "function" ? props.goHome : () => {};
+    this.state = {
+      ControlConfig: [],
+    };
+  }
+  componentDidMount() {
+    this.timer = setTimeout(() => {
+      this.loadPageConfig();
+    }, 500);
+  }
+  componentWillUnmount() {
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+  }
+  loadPageConfig = () => {
+    try {
+      const ControlConfig = this.props?.loadPageConfigurations({
+        pageID: this.pageID,
+        controlId: this.id,
+      });
+      this.setState({ ControlConfig });
+    } catch (error) {}
+  };
+  render() {
+    const { ControlConfig } = this.state;
+    const Styles = ControlConfig?.Styles;
+    const ImageSource = ControlConfig?.ImageSource || this.source;
+    const StyleProps = transformStyles(Styles);
+    const dynamicStyle =
+      StyleProps && Object.keys(StyleProps).length > 0
+        ? Object.values(StyleProps)[0]
+        : this.styles;
+    return (
+      <SafeAreaView style={[dynamicStyle, styles.headerMainContainer]}>
+        <View style={styles.headerSubContainer}>
+          <View style={styles.headerLeftContainer}>
+            <TouchableOpacity
+              style={{ paddingRight: 20 }}
+              onPress={() => this.goBack()}
+            >
+              {ImageSource ? (
+                <Image
+                  source={{ uri: ImageSource }}
+                  style={Styles ? Styles?.BackIcon : styles.BackIcon}
+                />
+              ) : (
+                <Image
+                  alt="image"
+                  source={require("@/assets/images/icons/Back.png")}
+                />
+              )}
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>{this.headerTitle}</Text>
+          </View>
+          <TouchableOpacity onPress={() => this.goHome()}>
+            {ImageSource ? (
+              <Image
+                source={{ uri: ImageSource }}
+                style={Styles ? Styles?.HomeIcon : styles.HomeIcon}
+              />
+            ) : (
+              <Image
+                alt="image"
+                source={require("@/assets/images/icons/Home.png")}
+                style={Styles ? Styles?.HomeIcon : styles.HomeIcon}
+              />
+            )}
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+}
+
+class CbBox extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      controlConfig: {},
+    };
+  }
+
+  componentDidMount() {
+    setTimeout(() => {
+      this.loadPageConfig();
+    }, 500);
+  }
+
+  async loadPageConfig() {
+    try {
+      const { loadPageConfigurations, pageId, id } = this.props;
+      const config = await loadPageConfigurations({
+        pageID: pageId,
+        controlId: id,
+      });
+      if (config) {
+        this.setState({ controlConfig: config });
+      }
+    } catch (error) {
+    }
+  }
+
+  flattenStyle(inputStyle) {
+    if (Array.isArray(inputStyle)) {
+      return inputStyle.reduce((acc, style) => ({ ...acc, ...style }), {});
+    }
+    return inputStyle || {};
+  }
+
+  render() {
+    const {
+      style = {},
+      Conditionalstyle = {},
+      children,
+    } = this.props;
+    const { controlConfig } = this.state;
+
+    const stylesFromConfig = transformStyles(controlConfig?.Styles);
+    const dynamicStyle = stylesFromConfig && Object.keys(stylesFromConfig).length > 0
+      ? Object.values(stylesFromConfig)[0]
+      : style;
+
+    const combinedStyle = {
+      ...this.flattenStyle(dynamicStyle),
+      ...this.flattenStyle(Conditionalstyle),
+    };
+
+    return (
+      <Box style={combinedStyle}>
+        {children}
+      </Box>
+    );
+  }
+}
+
+class CbImageBackground extends React.Component {
+  constructor(props) {
+    super();
+    this.id = props.id;
+    this.pageID = props.pageId;
+    this.source = props.source || null;
+    this.styles = props.style || null;
+    this.state = {
+      ControlConfig: [],
+    };
+  }
+  componentDidMount() {
+    setTimeout(() => {
+      this.loadPageConfig();
+    }, 500);
+  }
+  loadPageConfig = () => {
+    try {
+      const ControlConfig = this.props?.loadPageConfigurations({
+        pageID: this.pageID,
+        controlId: this.id,
+      });
+      this.setState({ ControlConfig });
+    } catch (error) {}
+  };
+
+  render() {
+    const { ControlConfig } = this.state;
+    const { children } = this.props;
+    const sourceprop = ControlConfig?.source || this.source;
+    const Styles = ControlConfig?.Styles;
+    const StyleProps = transformStyles(Styles);
+    const dynamicStyle =
+      StyleProps && Object.keys(StyleProps).length > 0
+        ? Object.values(StyleProps)[0]
+        : this.styles;
+
+    return (
+      <ImageBackground source={sourceprop} alt="login" style={dynamicStyle}>
+        {children}
+      </ImageBackground>
+    );
+  }
+}
+
+class CbText extends React.Component {
+  constructor(props) {
+    super(props);
+    this.id = props.id;
+    this.pageID = props.pageId;
+    this.styles = props.style || {};
+    this.numberOfLines = props.numberOfLines || undefined;
+    this.Conditionalstyle = props.Conditionalstyle || {};
+    this.strikeThrough = props.strikeThrough || "false";
+    this.state = {
+      ControlConfig: [],
+    };
+  }
+  componentDidMount() {
+    setTimeout(() => {
+      this.loadPageConfig();
+    }, 500);
+  }
+  loadPageConfig = () => {
+    try {
+      const ControlConfig = this.props?.loadPageConfigurations({
+        pageID: this.pageID,
+        controlId: this.id,
+      });
+      this.setState({ ControlConfig });
+    } catch (error) {}
+  };
+
+  flattenStyle(inputStyle) {
+    if (Array.isArray(inputStyle)) {
+      return inputStyle.reduce((acc, style) => ({ ...acc, ...style }), {});
+    }
+    return inputStyle || {};
+  }
+
+  render() {
+    const { ControlConfig } = this.state;
+    const StrikeThrough = ControlConfig?.StrikeThrough || this.strikeThrough;
+    const Styles = ControlConfig?.Styles;
+    const StyleProps = transformStyles(Styles);
+    const dynamicStyle =
+      StyleProps && Object.keys(StyleProps).length > 0
+        ? Object.values(StyleProps)[0]
+        : this.styles;
+    const LabelText = ControlConfig?.LabelText || this.props.children;
+    const combinedStyle = {
+      ...this.flattenStyle(dynamicStyle),
+      ...this.flattenStyle(this.Conditionalstyle),
+    };
+
+
+    return (
+      <Text
+        strikeThrough={StrikeThrough}
+        style={combinedStyle}
+        numberOfLines={this.numberOfLines}
+      >
+        {LabelText}
+      </Text>
+    );
+  }
+}
+
+class CbImage extends React.Component {
+  constructor(props) {
+    super(props);
+    this.id = props.id;
+    this.pageID = props.pageId;
+    this.source = props.source || "";
+    this.imageJsx = props.imageJsx;
+    this.resizeMode = props.resizeMode || "";
+    this.styles = props.style || "";
+    this.state = {
+      ControlConfig: [],
+    };
+  }
+  componentDidMount() {
+    setTimeout(() => {
+      this.loadPageConfig();
+    }, 500);
+  }
+  loadPageConfig = () => {
+    try {
+      const ControlConfig = this.props?.loadPageConfigurations({
+        pageID: this.pageID,
+        controlId: this.id,
+      });
+      this.setState({ ControlConfig });
+    } catch (error) {}
+  };
+
+  render() {
+    const { ControlConfig } = this.state;
+    const source = ControlConfig?.ImageSource || this.source;
+    const Styles = ControlConfig?.Styles;
+    const StyleProps = transformStyles(Styles);
+    const dynamicStyle =
+      StyleProps && Object.keys(StyleProps).length > 0
+        ? Object.values(StyleProps)[0]
+        : this.styles;
+    const jsx = this.imageJsx;
+    const ResizeMode = ControlConfig?.resizeMode || this.resizeMode;
+    if (source) {
+      if (source.endsWith(".svg")) {
+        return <SvgUri source={{ uri: source }} />;
+      } else {
+        return (
+          <Image
+            alt="image"
+            resizeMode={ResizeMode}
+            source={{ uri: source }}
+            style={dynamicStyle}
+          />
+        );
+      }
+    } else if (React.isValidElement(jsx)) {
+      return React.cloneElement(this.imageJsx, {
+        style: [jsx.props.style, dynamicStyle], // Merge styles
+      });
+    } else {
+      return null;
+    }
+  }
+}
+
 const mapStateToProps = (state) => {
   return{
     formData: state.login.formData,
@@ -409,7 +703,8 @@ const mapStateToProps = (state) => {
  
 const mapDispatchToProps = {
   setFormFieldData,
-  getFormFieldData
+  getFormFieldData,
+  loadPageConfigurations
 };
 CbImage.displayName = 'ConnectedCbImage';
 cbButton.displayName = 'ConnectedCbButton';
@@ -421,7 +716,9 @@ cbRadioButton.displayName = 'ConnectedCbRadioButton';
 cbVStack.displayName = 'ConnectedCbVStack';
 cbForm.displayName = 'ConnectedCbForm';
 CbFlatList.displayName = "ConnectedCbFlatList"
- 
+CbHeader.displayName = 'ConnectedCbHeader'
+CbText.displayName = "ConnectedCbText"
+CbBox.displayName = 'ConnectedCbBox';
 
 const ConnectedCbInput = connect(mapStateToProps, mapDispatchToProps)(cbInput);
 const ConnectedCbButton = connect(mapStateToProps, mapDispatchToProps)(cbButton);
@@ -433,6 +730,9 @@ const ConnectedCbVStack = connect(mapStateToProps, mapDispatchToProps)(cbVStack)
 const ConnectedCbForm = connect(mapStateToProps, mapDispatchToProps)(cbForm);
 const ConnectedCbFlatList = connect(mapStateToProps, mapDispatchToProps)(CbFlatList);
 const ConnectedCbImage = connect(mapStateToProps, mapDispatchToProps)(CbImage);
+const ConnectedCbHeader = connect(mapStateToProps, mapDispatchToProps)(CbHeader);
+const ConnectedCbText = connect(mapStateToProps, mapDispatchToProps)(CbText);
+const ConnectedCbBox = connect(mapStateToProps, mapDispatchToProps)(CbBox);
 export { 
   ConnectedCbButton, 
   ConnectedCbInput, 
@@ -443,7 +743,10 @@ export {
   ConnectedCbVStack, 
   ConnectedCbForm, 
   ConnectedCbFlatList, 
-  ConnectedCbImage 
+  ConnectedCbImage,
+  ConnectedCbHeader,
+  ConnectedCbText,
+  ConnectedCbBox 
 };
  
 // export {  cbButton, cbInput, cbCheckBox, cbSelect, cbImageBackground, cbRadioButton, cbVStack, cbForm, CbFlatList, CbImage };
