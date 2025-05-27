@@ -11,10 +11,11 @@ import { Provider } from 'react-redux'
 import * as Font from 'expo-font';
 import CbLoader from './components/cobalt/cobaltLoader';
 import { store } from './components/redux/store';
-import { NormalClubNavigation } from './components/navigations/Navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import loginUI from './source/views/login/loginUI';
 import ProfitCenterUI from './source/views/ProfitCenter/ProfitCenterUI';
+import * as UI from '@/components/cobalt/importUI';
+import MenuOrderUI from './source/views/MenuOrder/MenuOrderUI';
+
 // Global Configurations
 const appConfigJson = '[{"PageId":"Login","Controlls":[{"type":"backgroundImage","id":"loginBackground","styles":{"container":{"flex":1,"resizeMode":"cover","justifyContent":"center","alignItems":"center"}}},{"type":"VStack","id":"VStack1","space":"lg"},{"type":"text","id":"username","placeholder":"User Name/Member ID","labelText":"User Name","variant":"outline","errorMessage":"User Name is Requried.","isDisabled":0,"isInvalid":0,"isReadOnly":0,"isRequired":1},{"type":"password","id":"password","placeholder":"Password","labelText":"Password","variant":"underlined","errorMessage":"Password is Requried.","isDisabled":0,"isInvalid":0,"isReadOnly":0,"isRequired":1},{"type":"checkbox","id":"rememberme","labeltext":"Remember Me"},{"type":"select","id":"department","placeholder":"Department","labelText":"Select Department","options":[{"label":"Dining","value":"dining"},{"label":"Golf","value":"golf"},{"label":"Tennis","value":"tennis"},{"label":"Pool","value":"pool"}]},{"type":"radioButton","id":"gender","alignment":"Horizontal","labelText":"Gender","options":[{"label":"Male","value":"male"},{"label":"Female","value":"female"},{"label":"Others","value":"others"}]},{"type":"button","id":"login","text":"Login","variant":"","backgroundColor":"white","borderRadius":"40"},{"id":"cancel","text":"Cancel","variant":"","backgroundColor":"white","borderRadius":"40"}]}]';
 global.appConfigJsonArray = typeof appConfigJson === 'string' ? JSON.parse(appConfigJson) : appConfigJson;
@@ -67,13 +68,85 @@ export default function App(props) {
     <GluestackUIProvider mode="light">
       <Provider store={store}>
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <NavigationContainer >
-            <Stack.Navigator>
+          <NavigationContainer>
+            <Stack.Navigator initialRouteName="MenuOrder">
               <Stack.Screen
                 name="ProfitCenter"
                 component={ProfitCenterUI}
-                options={{ headerShown: false }}
+                options={{
+                  headerShown: false,
+                  headerTitle: () => {
+                    return (
+                      <UI.View
+                        id="HeaderTitleContainer"
+                        pageId="Header"
+                        style={styles.headerTitle}
+                      >
+                        <UI.ConnectedCbText
+                          id="HeadermenuTitle"
+                          pageId="Header"
+                          style={styles.menuTitle}
+                        >
+                          Food Ordering
+                        </UI.ConnectedCbText>
+                      </UI.View>
+                    );
+                  },
+                  unmountOnBlur: true,
+                }}
               />
+              <Stack.Screen
+                name="MenuOrder"
+                component={MenuOrderUI}
+                options={{ headerShown: false, unmountOnBlur: true }}
+              />
+
+              {/* <Stack.Screen
+                name="Recentorders"
+                component={RecentordersScreen}
+                options={{ 
+                  headerShown: false,    
+                  gestureEnabled: false,
+                  stackPresentation: 'modal',
+                  unmountOnBlur: true
+                }}
+
+            />
+            <Stack.Screen
+              name="ItemModifier"
+              component={ItemModifier}
+              options={{
+                headerShown: false,
+                title: "Back to Menu",
+                unmountOnBlur: true 
+              }}
+              />
+            <Stack.Screen
+              name="ItemModifierUIFavs"
+              component={ItemModifierUIFavs}
+              options={{
+                headerShown: false,
+                title: "Back to Menu",
+                unmountOnBlur: true 
+              }}
+              />
+              <Stack.Screen
+                name="MyCart"
+                component={MyCartScreen}
+                options={{ 
+                  headerShown: false, 
+                  headerTitle: () => {
+                    return(
+                      <UI.View id="HeaderTitleContainer" pageId="Header" style={styles.headerTitle}>
+                        <UI.CbText id="HeadermenuTitle" pageId="Header" style={styles.menuTitle}>
+                        My Cart
+                        </UI.CbText>
+                      </UI.View>
+                    )
+                  },
+                  unmountOnBlur: true 
+                 }}
+              /> */}
             </Stack.Navigator>
             <StatusBar barStyle="light-content" backgroundColor="#004d78" />
           </NavigationContainer>

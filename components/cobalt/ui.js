@@ -695,6 +695,155 @@ class CbImage extends React.Component {
   }
 }
 
+
+class cbSearchbox extends React.Component {
+  constructor(props) {
+    super(props);
+    this.id=props.id;
+    this.pageID=props.pageId
+    this.controlsConfigJson=props.controlsConfigJson;
+    this.search=props.Searchsource || "";
+    this.backarrow=props.Backarrowsource || "";
+    this.close=props.closesource || "";
+    this.isRecentOrderOpen = props.isRecentOrderOpen || false
+    this.state = {
+      showSearchInput: false,
+      searchValue: "",
+      ControlConfig: [],
+    };
+    this.inputRef = React.createRef();
+  }
+
+  handleFocus = () => {
+    if (this.inputRef?.current) {
+      this.inputRef.current.focus();
+    }
+  };
+
+  handleSearch = (value) => {
+    this.setState({ searchValue: value });
+    this.props?.onSearch(value); // Notify parent
+  };
+
+  handleClear = () => {
+    this.setState({ searchValue: "" });
+    this.props?.onSearch(""); // Reset search results
+  };
+
+  componentDidUpdate(prevProps) {
+    if (
+      prevProps.isRecentOrderOpen !== this.props.isRecentOrderOpen &&
+      this.props.isRecentOrderOpen
+    ) {
+      this.setState({ showSearchInput: true }, () => {
+        if (this.inputRef?.current) {
+          this.inputRef?.current?.focus();
+        }
+      });
+    }
+  }
+  componentDidMount() {
+    setTimeout(() => {
+      this.loadPageConfig();
+    }, 500);
+  }
+  loadPageConfig = () => {
+    try {
+      const ControlConfig = this.props?.loadPageConfigurations({
+        pageID: this.pageID,
+        controlId: this.id,
+      });
+      this.setState({ ControlConfig });
+    } catch (error) {}
+  };
+
+  handleClearClick = (setState, onSearch) => {
+    setState({ searchValue: "" });
+  
+    if (onSearch) {
+      onSearch("");
+    }
+  };
+
+  
+  render() {
+    const { showSearchInput, searchValue,ControlConfig } = this.state;
+    const Searchsource=ControlConfig?.SearchIconSource || this.search;    
+    const Closesource=ControlConfig?.CloseIconSource || this.close;
+      const Backarrowsource = ControlConfig?.BackarrowIconSource || this.backarrow;
+      const placeholderprop= ControlConfig?.PlaceHolder;
+    const Styles=ControlConfig?.Styles;
+    const StyleProps = transformStyles(Styles); 
+    return (
+      
+      <TouchableOpacity style={ showSearchInput ? (StyleProps?.SearchExpand || styles.SearchExpand) : (StyleProps?.SearchIcon || styles.SearchIcon)}  onPress={() => {
+
+        this.setState({ showSearchInput: true });
+
+        if (this.props.onSearchPress) {
+
+          this.props?.onSearchPress();
+
+        }
+
+      }}>
+        {showSearchInput ? (
+          <Box style={StyleProps? StyleProps?.searchBarMainContainer : styles.searchBarMainContainer}>
+            <TouchableOpacity   onPress={() =>{ 
+              this.handleClearClick(
+                this.setState.bind(this),
+                this.props?.onSearch
+              )
+              this.setState({ showSearchInput: false })
+          }}
+ style={{ marginLeft: 10 }} >
+              {
+                Backarrowsource ? <Image source={{ uri: Backarrowsource}} style={StyleProps? StyleProps?.BackArrowIcon : styles.BackArrowIcon}/>:<Image alt='image' source={require("@/assets/images/icons/BackArrow.png")} />
+              }
+            </TouchableOpacity>
+            <Input style={StyleProps? StyleProps?.SearchinputBox : styles.SearchinputBox}>
+              <InputField
+                  ref={this.inputRef}
+                  value={searchValue}
+                  placeholder={placeholderprop}
+                  onChangeText={(value) => this.handleSearch(value)}
+                  autoFocus={true} // Ensure autoFocus is enabled
+              />
+            </Input>
+            {searchValue && (
+              <TouchableOpacity
+                onPress={() => this.handleClearClick(
+                  this.setState.bind(this),
+                  this.props?.onSearch // Reset search results & show default list
+                )}
+                style={styles.closeIconBtn}
+              >
+                {
+                Closesource? <Image source={{ uri: Closesource}} style={StyleProps? StyleProps?.CloseIcon : styles.CloseIcon}/>:<Image alt='image' source={require("@/assets/images/icons/Close.png")} />
+                }
+              </TouchableOpacity>
+            )}
+          </Box>
+        ) : (
+          <TouchableOpacity
+            style={styles.searchBtn}
+            onPress={() => {
+              this.setState({ showSearchInput: true });
+              if (this.props?.onSearchPress) {
+                this.props.onSearchPress(); // Notify MenuOrderUI.js
+              }
+            }}          >
+            {
+          Searchsource ? <Image source={{ uri: Searchsource}} style={StyleProps? StyleProps?.SearchIconImage : styles.SearchIconImage}/>: <Image alt='image' source={require("@/assets/images/icons/Search.png")} />
+            }
+          <Text style={styles.searchTxt}>Search</Text>
+          </TouchableOpacity>
+        )}
+       </TouchableOpacity>
+    );
+  }
+}
+
 const mapStateToProps = (state) => {
   return{
     formData: state.login.formData,
@@ -719,6 +868,7 @@ CbFlatList.displayName = "ConnectedCbFlatList"
 CbHeader.displayName = 'ConnectedCbHeader'
 CbText.displayName = "ConnectedCbText"
 CbBox.displayName = 'ConnectedCbBox';
+cbSearchbox.displayName = 'ConnectedCbSearchbox';
 
 const ConnectedCbInput = connect(mapStateToProps, mapDispatchToProps)(cbInput);
 const ConnectedCbButton = connect(mapStateToProps, mapDispatchToProps)(cbButton);
@@ -733,6 +883,7 @@ const ConnectedCbImage = connect(mapStateToProps, mapDispatchToProps)(CbImage);
 const ConnectedCbHeader = connect(mapStateToProps, mapDispatchToProps)(CbHeader);
 const ConnectedCbText = connect(mapStateToProps, mapDispatchToProps)(CbText);
 const ConnectedCbBox = connect(mapStateToProps, mapDispatchToProps)(CbBox);
+const ConnectedCbSearchbox = connect(mapStateToProps, mapDispatchToProps)(cbSearchbox);
 export { 
   ConnectedCbButton, 
   ConnectedCbInput, 
@@ -746,7 +897,8 @@ export {
   ConnectedCbImage,
   ConnectedCbHeader,
   ConnectedCbText,
-  ConnectedCbBox 
+  ConnectedCbBox,
+  ConnectedCbSearchbox 
 };
  
 // export {  cbButton, cbInput, cbCheckBox, cbSelect, cbImageBackground, cbRadioButton, cbVStack, cbForm, CbFlatList, CbImage };

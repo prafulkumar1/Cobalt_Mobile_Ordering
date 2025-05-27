@@ -43,6 +43,14 @@ export const styles = StyleSheet.create({
     padding: responsiveWidth(2),
     position: 'absolute',
     right: -22,
+    backgroundColor: "#fff",
+    borderRadius:5,
+    borderWidth: 1,
+  },
+  addCartIcons:{
+    width: 15, 
+    height: 15,
+    resizeMode: 'contain'
   },
   operationBtn: {
     position: 'absolute',
@@ -131,6 +139,7 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     alignSelf: "center",
+    alignSelf: "center",
     borderRadius: 5,
     width: 115,
     height: 40,
@@ -142,6 +151,7 @@ export const styles = StyleSheet.create({
     alignSelf: "center",
     width: 115,
     height: 40,
+    alignSelf: "center",
     marginHorizontal: 5,
     borderRadius: 5,
     opacity: 0.5
@@ -167,6 +177,7 @@ export const styles = StyleSheet.create({
   cartCountTxt:{
     position: "absolute",
     bottom: 40,
+    bottom: 40,
     color: "#FFFFFF",
     fontSize: isPlatformIos()?responsiveFontSize(2.6):responsiveFontSize(2.6),
     overflow: "hidden",
@@ -175,26 +186,21 @@ export const styles = StyleSheet.create({
     paddingTop:5
   },
   backArrowHeader:{width:responsiveWidth(9),justifyContent:"center",alignItems:"center",paddingVertical:5,position:"relative",left:-10},
-  BackIcon:{width:12,height:24},
-  cartIcon:{
-    width:35,
-    height:35,
-    resizeMode:"contain",
-    margin:5,    
-    position: "absolute",
-    bottom: 8,
-    left: 8,
-  },
+  BackIcon:{width:responsiveWidth(2),height:responsiveWidth(5)},
+  HomeIcon:{width:24,height:24},
+  HeaderBackground:{ backgroundColor: "red" },
+  cartIcon:{ width:35,height:35,resizeMode:"contain",margin:5,position: "absolute",bottom: 8, left: 8},
   mediumBtn:{
-    paddingVertical: isPlatformAndroid()?6:8,
-    paddingHorizontal: 10,
-    borderRadius: 20,
+    // paddingVertical: 10,
+     paddingHorizontal: 10,
+    borderRadius: 25,
     justifyContent: "space-around",
     alignItems: "center",
     flexDirection: "row",
     borderWidth: 2,
     borderColor: "#2A4E7D",
-    width: responsiveWidth(30)
+    width: responsiveWidth(28),
+    height:38,
   },
   mediumBtnTxt:{ color: "#2A4E7D", fontSize: 16, textAlign: "center",fontFamily: "SourceSansPro_SemiBold"},
   CheckboxIndicator:{
@@ -207,6 +213,7 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#fff"
   },
+  modifiercheckIcon:{color: "#707070", width: 17,height: 17},
   scrollIndicator:{justifyContent:"center",alignSelf:"center",alignItems:"center"},
   doneBtn:{
     paddingVertical: 10,
@@ -447,11 +454,11 @@ CheckIcon:{color:"#ffff"},
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    width: "95%",
-    height: "100%",
+    width: responsiveWidth(95),
+    height: responsiveHeight(100),
     marginRight: 25
   },
-  inputBox:{
+  SearchinputBox:{
     flex: 1,
     borderColor: "transparent",
     borderWidth: 0,
@@ -459,7 +466,7 @@ CheckIcon:{color:"#ffff"},
     backgroundColor: "#f0f0f0",
     height:50,
   },
-  selectedLabelItem:{fontSize:responsiveFontSize(2),fontFamily: "SourceSansPro_SemiBold",color:"#4B5154",marginTop:5},
+  selectedLabelItem:{fontSize:responsiveFontSize(2),fontFamily: "SourceSansPro_SemiBold",color:"#4B5154",marginTop:5,marginTop:5},
   crossIcon:{
     width: 30,
     height: 30,
@@ -487,6 +494,26 @@ CheckIcon:{color:"#ffff"},
   checkboxContainer: {
     flexDirection: 'row',
     marginBottom: 20,
+  },
+  SearchIcon:{
+    width: responsiveWidth(60),
+    height: 40,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: responsiveWidth(2),
+    borderRadius: 4,
+    backgroundColor: "white"
+  },
+  SearchExpand:{
+    width: "100%",
+    height:responsiveHeight(4.5),
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: responsiveWidth(2),
+    borderRadius: 4,
+    backgroundColor: "#f0f0f0"
   },
   centeredView: {
     flex: 1,
@@ -519,7 +546,7 @@ CheckIcon:{color:"#ffff"},
   blackShadow:{width:"100%",height:"100%",backgroundColor:"#00000099",position:"absolute",opacity:0.6},
   collapseIcon:{},
   quantityMessage:{flexDirection:"row",justifyContent:"center",alignItems:"center"},
-  searchTxt:{fontFamily:"SourceSansPro_Regular",color:"#8A8A8A",marginLeft:12,fontSize:responsiveFontSize(1.8)},
+  searchTxt:{fontFamily:"SourceSansPro_Regular",color:"#8A8A8A",marginLeft:12,fontSize:16},
   searchBtn:{position:"absolute",left:20,flexDirection:"row",alignItems:"center"},
   backSearch:{ marginLeft: 15,height:40,width:30,justifyContent:"center",alignItems:"center" },
   backArrowIcon:{height:15,width:15,resizeMode:"contain"},

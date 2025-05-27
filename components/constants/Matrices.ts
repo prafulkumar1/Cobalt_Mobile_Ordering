@@ -72,3 +72,15 @@ export const transformStyles = (styles:any) => {
     Object.entries(styles).map(([className, styleObject]) => [className, applyResponsive(styleObject)])
   );
 };
+
+
+export const throttle = (func:any, delay:any) => {
+  let lastCall = 0;
+  return function (...args) {
+    const now = new Date().getTime();
+    if (now - lastCall >= delay) {
+      lastCall = now;
+      return func(...args);
+    }
+  };
+};
