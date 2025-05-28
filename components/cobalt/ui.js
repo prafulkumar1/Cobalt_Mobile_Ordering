@@ -844,9 +844,63 @@ class cbSearchbox extends React.Component {
   }
 }
 
+class CbFloatingButton extends React.Component {
+  constructor(props) {
+    super(props);
+    this.id=props.id;
+     this.pageID=props.pageId;
+    this.cartQuantity = props.cartQuantity
+    this.screenProps = props.props
+    this.state={
+      ControlConfig:[]
+    }
+    this.prevCount = 0;
+  }
+  componentDidMount() {
+    setTimeout(() => {
+      this.loadPageConfig();
+    }, 500);
+  }
+  loadPageConfig = () => {
+    try {
+      const ControlConfig = this.props?.loadPageConfigurations({
+        pageID: this.pageID,
+        controlId: this.id,
+      });
+      this.setState({ ControlConfig });
+    } catch (error) {}
+  };
+
+
+  render() {
+    const { ControlConfig }= this.state;
+    const Styles=ControlConfig?.Styles;
+    const StyleProps =Styles ? (transformStyles(Styles)) : styles;    
+    const CartSource= ControlConfig?.CartSource;    
+
+    // const getFinalQuantity = cartData && cartData.reduce((total, prev) => total + Number(prev.quantity), 0);
+    const getFinalQuantity = this.props?.cartData && this.props?.cartData?.reduce((total, prev) => total + Number(prev.quantity), 0) || 0;
+    if (getFinalQuantity !== this.prevCount) {
+      this.prevCount = getFinalQuantity;
+    }
+    return (
+      <View style={StyleProps ? StyleProps?.floatingContainer : styles.floatingContainer}>
+      <TouchableOpacity style={StyleProps ? StyleProps?.floatingBtn : styles.floatingBtn} onPress={() => navigateToScreen(this.screenProps, "MyCart", true, { profileCenterTile: this.screenProps?.route?.params?.profileCenterTile })}>
+        
+        {
+        CartSource ? <Image source={{ uri: CartSource}} style={StyleProps ? StyleProps?.cartIcon : styles.cartIcon}/>:<Image source={require("@/assets/images/icons/cartIcon2x.png")} style={styles.cartIcon} />
+        }
+        <Text style={[StyleProps ? StyleProps?.cartCountTxt : styles.cartCountTxt,{right:getFinalQuantity >= 10?10:12}]}>{this.prevCount || 0}</Text>
+      </TouchableOpacity>
+    </View>
+    );
+  }
+}
+
 const mapStateToProps = (state) => {
   return{
     formData: state.login.formData,
+    cartData:state.Cart.cartData,
   }
 };
  
@@ -869,6 +923,7 @@ CbHeader.displayName = 'ConnectedCbHeader'
 CbText.displayName = "ConnectedCbText"
 CbBox.displayName = 'ConnectedCbBox';
 cbSearchbox.displayName = 'ConnectedCbSearchbox';
+CbFloatingButton.displayName = 'ConnectedCbFloatingButton';
 
 const ConnectedCbInput = connect(mapStateToProps, mapDispatchToProps)(cbInput);
 const ConnectedCbButton = connect(mapStateToProps, mapDispatchToProps)(cbButton);
@@ -884,6 +939,7 @@ const ConnectedCbHeader = connect(mapStateToProps, mapDispatchToProps)(CbHeader)
 const ConnectedCbText = connect(mapStateToProps, mapDispatchToProps)(CbText);
 const ConnectedCbBox = connect(mapStateToProps, mapDispatchToProps)(CbBox);
 const ConnectedCbSearchbox = connect(mapStateToProps, mapDispatchToProps)(cbSearchbox);
+const ConnectedCbFloatingButton = connect(mapStateToProps, mapDispatchToProps)(CbFloatingButton);
 export { 
   ConnectedCbButton, 
   ConnectedCbInput, 
@@ -898,7 +954,8 @@ export {
   ConnectedCbHeader,
   ConnectedCbText,
   ConnectedCbBox,
-  ConnectedCbSearchbox 
+  ConnectedCbSearchbox,
+  ConnectedCbFloatingButton 
 };
  
 // export {  cbButton, cbInput, cbCheckBox, cbSelect, cbImageBackground, cbRadioButton, cbVStack, cbForm, CbFlatList, CbImage };

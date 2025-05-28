@@ -69,7 +69,7 @@ export default function App(props) {
       <Provider store={store}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <NavigationContainer>
-            <Stack.Navigator initialRouteName="MenuOrder">
+            <Stack.Navigator>
               <Stack.Screen
                 name="ProfitCenter"
                 component={ProfitCenterUI}

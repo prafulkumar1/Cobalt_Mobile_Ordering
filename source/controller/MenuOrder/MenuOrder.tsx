@@ -3,8 +3,8 @@ import { navigateToScreen } from '@/components/constants/Navigations';
 import { IMenuItem } from '@/components/constants/Types';
 import { postApiCall } from '@/components/utlis/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Component } from 'react'
-import { Alert, Dimensions } from 'react-native';
+import React, { Component } from 'react'
+import { Alert, Dimensions, InteractionManager } from 'react-native';
 const { width, height } = Dimensions.get('window');
 const pageId='Login';
 
@@ -45,6 +45,8 @@ cartData:any
 modifierCartItemData:any
 isExitProfitCenter:boolean
 openCartRemovePopup:() =>void
+itemDataVisible:boolean
+closePreviewModal:() =>void
 }
 interface SS{}
 
@@ -65,6 +67,10 @@ const clearAllTimeouts = () => {
   }
 };
 export default class useMenuOrderLogic extends Component<IProps,IState,SS> {
+  scrollViewRef:any
+  categoryScrollRef:any
+  categoryPositions:any
+  categoryRefs:any
     constructor(props:IProps){
       super(props)
       this.state ={
@@ -89,6 +95,11 @@ export default class useMenuOrderLogic extends Component<IProps,IState,SS> {
           toastMessage: "",
         },
       }
+      this.scrollViewRef = React.createRef();
+    this.categoryScrollRef = React.createRef();
+
+    this.categoryPositions = {};
+    this.categoryRefs = {};
     }
     
     componentDidMount() {
@@ -312,9 +323,6 @@ export default class useMenuOrderLogic extends Component<IProps,IState,SS> {
 
   throttledOpenItemDetails = throttle(this.openItemDetails, 5000);
 
-
-
-
   handleAddToCartBtn = async (mealItemDetails: any) => {
     const itemId = mealItemDetails?.Item_ID;
   
@@ -393,7 +401,7 @@ export default class useMenuOrderLogic extends Component<IProps,IState,SS> {
     modifierQuantity,
     operation
   ) => {
-    this.setState({ apiLoader: true }); // Show loader at the start
+    this.setState({ apiLoader: true });
   
     try {
       let isItemAvailableInCart = false;
@@ -474,5 +482,95 @@ export default class useMenuOrderLogic extends Component<IProps,IState,SS> {
     // setModifierCartItemData([])
     await AsyncStorage.removeItem('cart_data')
   }
+
+
+
+  handleCategoryClick = (categoryId:string) => {
+    const yPosition = this.state.itemPositions[categoryId];
+    if (yPosition !== undefined && this.scrollViewRef.current) {
+      this.scrollViewRef.current.scrollTo({ y: yPosition, animated: true });
+
+      const updateData = this.state.selectedCategory.map((items) => ({
+        ...items,
+        CategoryIsSelect: items.Category_ID === categoryId ? 1 : 0,
+      }));
+
+      this.setState({ selectedCategory: updateData });
+    }
+  };
+
+  handleCategoryLayout = (event, categoryId) => {
+    const { x } = event?.nativeEvent.layout;
+    this.categoryPositions[categoryId] = x;
+  };
+
+  updateCategorySelection = (visibleCategoryId) => {
+    const updatedCategories = this.state.selectedCategory.map((category) => ({
+      ...category,
+      CategoryIsSelect: category.Category_ID === visibleCategoryId ? 1 : 0,
+    }));
+
+    this.setState({ selectedCategory: updatedCategories });
+
+    const xPosition = this.categoryPositions[visibleCategoryId];
+    if (xPosition !== undefined) {
+      this.categoryScrollRef.current?.scrollTo({ x: xPosition - 200, animated: true });
+    }
+  };
+
+  handleLayout = (categoryId:string, event:any) => {
+    const layout = event?.nativeEvent.layout;
+    this.categoryRefs[categoryId] = layout.y;
+  };
+
+  handleScroll = (event) => {
+    const scrollY = event?.nativeEvent?.contentOffset.y;
+    let visibleCategory = null;
+
+    for (const [categoryId, y] of Object.entries(this.categoryRefs)) {
+      if (scrollY >= +y - 50 && scrollY < +y + 50) {
+        visibleCategory = categoryId;
+        break;
+      }
+    }
+
+    if (visibleCategory) {
+      this.updateCategorySelection(visibleCategory);
+    }
+  };
+
+  handleItemLayout = (categoryId, event) => {
+    const layout = event?.nativeEvent?.layout;
+    this.setState((prevState) => ({
+      itemPositions: {
+        ...prevState.itemPositions,
+        [categoryId]: layout.y,
+      },
+    }));
+  };
+
+
+  handleCloseItemDetails = () => {
+    this.props.closePreviewModal()
+    // InteractionManager?.runAfterInteractions(() => {
+    //   const cartDetails = this.props.cartData?.find((items) => items.Item_ID === singleItemDetails?.Item_ID)
+    //   // setFormFieldData("ItemModifier", "", "Comments", "", false);
+    
+    //   if (selectedModifiers?.length === 0) {
+    //     if(cartDetails==undefined){
+    //       updateModifierItemQuantity(singleItemDetails, 0);
+    //     }
+    //     // updateModifierItemQuantity(singleItemDetails, 0);
+    //     // setModifiersResponseData([]);
+    //     setIsVisible(false);  
+
+    //     closePreviewModal();
+    //     setModifierApiResponse(null)  
+    //   } else {
+    //     setIsVisible(true);
+    //   }
+    // })
+  };
+
 
 }

@@ -6,7 +6,7 @@ import useMenuOrderLogic from '@/source/controller/MenuOrder/MenuOrder';
 import { Image } from '@/components/ui/image';
 import { navigateToScreen } from '@/components/constants/Navigations';
 import { styles } from '@/source/styles/MenuOrderStyle';
-import { handleOnSearch, openCartRemovePopup, storeMenuOrderData } from '@/components/redux/reducers/MenuOrderReducer';
+import { closePreviewModal, handleOnSearch, openCartRemovePopup, storeMenuOrderData } from '@/components/redux/reducers/MenuOrderReducer';
 import CbLoaderForMenu from "@/components/cobalt/cobaltLoaderForMenu"
 import { transformStyles } from '@/components/constants/Matrices';
 import { loadPageConfigurations } from '@/components/redux/reducers/ProfitCenterReducer';
@@ -72,7 +72,7 @@ class MenuOrderUI extends useMenuOrderLogic {
 
             {this.renderCategoryMainList()}
 
-            {/* {cartData?.length > 0 && <UI.CbFloatingButton id="CartButton" pageId="MenuOrder"  props={props} />} */}
+            {this.props.cartData?.length > 0 && <UI.ConnectedCbFloatingButton id="CartButton" pageId="MenuOrder"  props={this.props} />}
           </>
         )
       }
@@ -81,6 +81,170 @@ class MenuOrderUI extends useMenuOrderLogic {
         <UI.Text style={styles.emptyMealTxt}>{this.state.errorMessage}</UI.Text>
       )
     }
+  }
+
+  renderMenuCategoryList = (item) => {
+    const {mealperiodButtonConfig} = this.state
+    const MealperiodButtonConfigStyles=transformStyles(mealperiodButtonConfig?.Styles);
+    const ActiveBottomStyle=MealperiodButtonConfigStyles?.bottomStyle || styles.bottomStyle;
+    return (
+      <UI.Box>
+        <UI.TouchableOpacity
+          style={styles.categoryBtn}
+          activeOpacity={0.6}
+          onPress={() => this.handleCategoryClick(item.Category_ID)}
+        >
+            <UI.ConnectedCbText id="CategoryText" pageId="MenuOrder" style={styles.categoryText}>
+                {item.Category_Name?.toUpperCase()}
+            </UI.ConnectedCbText>
+          {item.CategoryIsSelect === 1 && (
+             <UI.ConnectedCbBox id="BottomStyle" pageId="MenuOrder"
+             style={ActiveBottomStyle} />
+          )}
+        </UI.TouchableOpacity>
+      </UI.Box>
+    );
+  }
+
+  showActiveAvailableColor = (isAvailable:number,IsDisable:number) => {
+    const Activecolor =this.state.categoryMainListConfig?.Activecolor  ||  "#4B5154";
+    const InActivecolor =this.state.categoryMainListConfig?.InActivecolor  ||  "#4B515469";
+    return { color: isAvailable === 1 &&IsDisable===0  ? Activecolor : InActivecolor };
+  };
+ 
+  renderMenuOrderItemsList = ({ item }) => {
+    const subMenuItem = item
+    return (
+      <UI.Box>
+        {item.SubMenu_Name !== null && (
+          <UI.TouchableOpacity
+            activeOpacity={0.5}
+            style={styles.cardMainContainer}
+            onPress={() => this.toggleSubmenu(subMenuItem.SubMenu_ID)}
+          >
+            <UI.ConnectedCbText id="ItemCategoryLabel" pageId="MenuOrder" style={styles.itemCategoryLabel}>
+              {item.SubMenu_Name}
+            </UI.ConnectedCbText>
+            {this.state.expandedSubmenus[subMenuItem.SubMenu_ID] ? (
+              <AntDesign name="up" size={20} color="#5773a2" />
+            ) : (
+              <AntDesign name="down" size={20} color="#5773a2" />
+            )}
+          </UI.TouchableOpacity>
+        )}
+        <UI.Box style={styles.mainItemContainer}>
+          {this.state.expandedSubmenus[subMenuItem.SubMenu_ID] && (
+            <UI.FlatList
+              data={item?.items}
+              keyExtractor={(item) => `Menu-Id-${item.Item_ID}`}
+              removeClippedSubviews={true}
+              updateCellsBatchingPeriod={100}
+              scrollEnabled={false}
+              initialNumToRender={10}
+              onEndReachedThreshold={0.1}
+              renderItem={({ item, index }) => {
+                let box = item;
+                const lastItem =
+                  index === subMenuItem.items?.length - 1;
+                const isExpanded = this.state.expandedIds.includes(box?.Item_ID);
+                return (
+                  <UI.TouchableOpacity
+                    activeOpacity={0.5}
+                    disabled={(box.IsAvailable === 0 && box.IsDisable === 1)}
+                    onPress={() => this.throttledOpenItemDetails(box)}
+                    key={box?.Item_ID}
+                    style={[
+                      styles.subContainer,
+                      {
+                        opacity:
+                          (box?.IsAvailable === 1 &&
+                            box?.IsDisable === 0)
+                            ? 1
+                            : 0.8,
+                      },
+                    ]}
+                  >
+                    <UI.ConnectedCbBox id="ItemrowContainer" pageId="MenuOrder" style={styles.rowContainer}>
+                      <UI.ConnectedCbBox id="ItemtextContainer" pageId="MenuOrder" style={[styles.textContainer]}>
+                        <UI.ConnectedCbText id="Itemnametext" pageId="MenuOrder"
+                          numberOfLines={0}
+                          style={[
+                            styles.mealTypeTitle,
+                            this.showActiveAvailableColor(box?.IsAvailable, box?.IsDisable),
+                          ]}
+                          Conditionalstyle={this.showActiveAvailableColor(box?.IsAvailable, box?.IsDisable)}
+                        >
+                          {box?.Item_Name}
+                        </UI.ConnectedCbText>
+                        <UI.ConnectedCbText id="Itempricetext" pageId="MenuOrder" numberOfLines={isExpanded ? undefined : 2}
+                          style={[styles.priceTxt, this.showActiveAvailableColor(box.IsAvailable, box.IsDisable)]}
+                          Conditionalstyle={this.showActiveAvailableColor(box?.IsAvailable, box?.IsDisable)}
+                        >
+                          {`$${box?.Price != null ? box?.Price : 0}`}
+                        </UI.ConnectedCbText>
+                        <UI.ConnectedCbText id="Itemdescriptiontext" pageId="MenuOrder"
+                          numberOfLines={isExpanded ? undefined : 2}
+                          style={[styles.descriptionTxt, this.showActiveAvailableColor(box.IsAvailable, box.IsDisable),
+                          {
+                            textAlign: "left",
+                            letterSpacing: -0.5,
+                          },
+                          ]}
+                          Conditionalstyle={this.showActiveAvailableColor(box?.IsAvailable, box?.IsDisable)}
+                        >
+                          {box?.Description}
+                        </UI.ConnectedCbText>
+                        {box?.Description?.length > 68 && (
+                          <UI.TouchableOpacity onPress={() =>
+                            this.handleReadMoreToggle(box.Item_ID)
+                          }>
+                            <UI.ConnectedCbText id="Itemunderlinetext" pageId="MenuOrder" style={styles.underLineTxt}>
+                              {isExpanded ? "Show Less" : "Read More"}
+                            </UI.ConnectedCbText>
+                          </UI.TouchableOpacity>
+
+                        )}
+                      </UI.ConnectedCbBox>
+
+                      <UI.Box style={styles.imageContainer}>
+                        <UI.Box
+                          style={{
+                            backgroundColor:
+                              "rgba(255, 255, 255, 0.2)",
+                          }}
+                          // disabled={box.IsAvailable === 0 && box.IsDisable === 1}
+                        >
+                          <Image
+                            source={{ uri: item.ImageUrl }}
+                            style={[
+                              styles.mealTypeImg,
+                              box.IsAvailable === 0 &&
+                              box.IsDisable === 1 && {
+                                opacity: 0.4,
+                              },
+                            ]}
+                          />
+                        </UI.Box>
+                        {
+                          this.renderAddToCartBtn(box)
+                        }
+                      </UI.Box>
+                    </UI.ConnectedCbBox>
+
+                    {!lastItem && (
+                      <UI.Box style={styles.horizontalLine}>
+                        <Divider />
+                      </UI.Box>
+                    )}
+                  </UI.TouchableOpacity>
+                );
+              }}
+            />
+
+          )}
+        </UI.Box>
+      </UI.Box>
+    );
   }
 
 
@@ -137,15 +301,15 @@ class MenuOrderUI extends useMenuOrderLogic {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.categoryListContainer}
             keyboardShouldPersistTaps="handled"
-            // ref={categoryScrollRef}
+            ref={this.categoryScrollRef}
           >
-            {/* {selectedCategory?.map((group) => renderMenuCategoryList(group))} */}
+            {this.state.selectedCategory?.map((group) => this.renderMenuCategoryList(group))}
           </UI.ScrollView>
         )}
 
         <UI.ScrollView style={BottomMiddleContainer}
-          // ref={scrollViewRef}
-          // onScroll={handleScroll}
+          ref={this.scrollViewRef}
+          onScroll={this.handleScroll}
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
@@ -155,10 +319,10 @@ class MenuOrderUI extends useMenuOrderLogic {
              this.state.selectedCategory?.map((category) => {
               return (
                 <UI.FlatList
-                  // onLayout={(e) => {
-                  //   handleLayout(category.Category_ID, e);
-                  //   handleItemLayout(category.Category_ID, e);
-                  // }}
+                  onLayout={(e) => {
+                    this.handleLayout(category.Category_ID, e);
+                    this.handleItemLayout(category.Category_ID, e);
+                  }}
                   data={category?.submenus}
                   windowSize={50}
                   keyExtractor={(item) => `Menu-Item-${item.SubMenu_ID}`}
@@ -166,171 +330,12 @@ class MenuOrderUI extends useMenuOrderLogic {
                   updateCellsBatchingPeriod={100}
                   scrollEnabled={false}
                   onEndReachedThreshold={0.8}
-                  renderItem={({ item }) => {
-                    const subMenuItem = item
-                    return (
-                      <UI.Box>
-                        {item.SubMenu_Name !== null && (
-                          <UI.TouchableOpacity
-                            activeOpacity={0.5}
-                            style={styles.cardMainContainer}
-                            onPress={() => this.toggleSubmenu(subMenuItem.SubMenu_ID)}
-                          >
-                            <UI.ConnectedCbText id="ItemCategoryLabel" pageId="MenuOrder" style={styles.itemCategoryLabel}>
-                              {item.SubMenu_Name}
-                            </UI.ConnectedCbText>
-                            {this.state.expandedSubmenus[subMenuItem.SubMenu_ID] ? (
-                              <AntDesign name="up" size={20} color="#5773a2" />
-                            ) : (
-                              <AntDesign name="down" size={20} color="#5773a2" />
-                            )}
-                          </UI.TouchableOpacity>
-                        )}
-                        <UI.Box style={styles.mainItemContainer}>
-                          {this.state.expandedSubmenus[subMenuItem.SubMenu_ID] && (
-                            <UI.FlatList
-                              data={item?.items}
-                              keyExtractor={(item) => `Menu-Id-${item.Item_ID}`}
-                              removeClippedSubviews={true}
-                              updateCellsBatchingPeriod={100}
-                              scrollEnabled={false}
-                              initialNumToRender={10}
-                              onEndReachedThreshold={0.1}
-                              renderItem={({ item, index }) => {
-                                let box = item;
-                                const lastItem =
-                                  index === subMenuItem.items?.length - 1;
-                                const isExpanded = this.state.expandedIds.includes(box?.Item_ID);
-                                return (
-                                  <UI.TouchableOpacity
-                                    activeOpacity={0.5}
-                                    disabled={(box.IsAvailable === 0 && box.IsDisable === 1)}
-                                    onPress={() => this.throttledOpenItemDetails(box)}
-                                    key={box?.Item_ID}
-                                    style={[
-                                      styles.subContainer,
-                                      {
-                                        opacity:
-                                          (box?.IsAvailable === 1 &&
-                                            box?.IsDisable === 0)
-                                            ? 1
-                                            : 0.8,
-                                      },
-                                    ]}
-                                  >
-                                    <UI.ConnectedCbBox id="ItemrowContainer" pageId="MenuOrder" style={styles.rowContainer}>
-                                      <UI.ConnectedCbBox id="ItemtextContainer" pageId="MenuOrder" style={[styles.textContainer]}>
-                                        <UI.ConnectedCbText id="Itemnametext" pageId="MenuOrder"
-                                          numberOfLines={0}
-                                          style={[
-                                            styles.mealTypeTitle,
-                                            showActiveAvailableColor(box?.IsAvailable, box?.IsDisable),
-                                          ]}
-                                          Conditionalstyle={showActiveAvailableColor(box?.IsAvailable, box?.IsDisable)}
-                                        >
-                                          {box?.Item_Name}
-                                        </UI.ConnectedCbText>
-                                        <UI.ConnectedCbText id="Itempricetext" pageId="MenuOrder" numberOfLines={isExpanded ? undefined : 2}
-                                          style={[styles.priceTxt, showActiveAvailableColor(box.IsAvailable, box.IsDisable)]}
-                                          Conditionalstyle={showActiveAvailableColor(box?.IsAvailable, box?.IsDisable)}
-                                        >
-                                          {`$${box?.Price != null ? box?.Price : 0}`}
-                                        </UI.ConnectedCbText>
-                                        <UI.ConnectedCbText id="Itemdescriptiontext" pageId="MenuOrder"
-                                          numberOfLines={isExpanded ? undefined : 2}
-                                          style={[styles.descriptionTxt, showActiveAvailableColor(box.IsAvailable, box.IsDisable),
-                                          {
-                                            textAlign: "left",
-                                            letterSpacing: -0.5,
-                                          },
-                                          ]}
-                                          Conditionalstyle={showActiveAvailableColor(box?.IsAvailable, box?.IsDisable)}
-                                        >
-                                          {box?.Description}
-                                        </UI.ConnectedCbText>
-                                        {box?.Description?.length > 68 && (
-                                          <UI.TouchableOpacity onPress={() =>
-                                            this.handleReadMoreToggle(box.Item_ID)
-                                          }>
-                                            <UI.ConnectedCbText id="Itemunderlinetext" pageId="MenuOrder" style={styles.underLineTxt}>
-                                              {isExpanded ? "Show Less" : "Read More"}
-                                            </UI.ConnectedCbText>
-                                          </UI.TouchableOpacity>
-
-                                        )}
-                                      </UI.ConnectedCbBox>
-
-                                      <UI.Box style={styles.imageContainer}>
-                                        <UI.Box
-                                          style={{
-                                            backgroundColor:
-                                              "rgba(255, 255, 255, 0.2)",
-                                          }}
-                                          // disabled={(box.IsAvailable === 0 && box.IsDisable === 1) ? true : false}
-                                        >
-                                          <Image
-                                            source={{ uri: item.ImageUrl }}
-                                            style={[
-                                              styles.mealTypeImg,
-                                              box.IsAvailable === 0 &&
-                                              box.IsDisable === 1 && {
-                                                opacity: 0.4,
-                                              },
-                                            ]}
-                                          />
-                                        </UI.Box>
-                                        {
-                                          this.renderAddToCartBtn(box)
-                                        }
-                                        {/* <UI.CbAddToCartButton mealItemDetails={box} /> */}
-                                      </UI.Box>
-                                    </UI.ConnectedCbBox>
-
-                                    {!lastItem && (
-                                      <UI.Box style={styles.horizontalLine}>
-                                        <Divider />
-                                      </UI.Box>
-                                    )}
-                                  </UI.TouchableOpacity>
-                                );
-                              }}
-                            />
-
-                          )}
-                        </UI.Box>
-                      </UI.Box>
-                    );
-                  }}
+                  renderItem={this.renderMenuOrderItemsList}
                 />
                   );
                 })
           }
         </UI.ScrollView>
-
-        {/* {
-          itemDataVisible &&
-          <UI.Modal
-            visible={itemDataVisible}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={closePreviewModal}
-          >
-            <UI.CbBox id="ModalBackground" pageId="MenuOrder" style={styles.modalBackground}>
-              <UI.TouchableOpacity
-                onPress={() => handleCloseItemDetails()}
-                style={styles.crossIcon}
-              >
-                <UI.CbBox id="CloseIconContainer" pageId="MenuOrder" style={styles.CloseIconContainer} >
-                  <UI.CbImage id="CloseIcon" pageId={'MenuOrder'} imageJsx={<Image source={require('@/assets/images/icons/Modal_Close.png')} style={styles.closeIcon} />} />
-                </UI.CbBox>
-              </UI.TouchableOpacity>
-              <UI.CbBox id="ModiferItems" pageId="MenuOrder" style={styles.modiferItems}>
-                <ItemModifier isRecentOrder={false} />
-              </UI.CbBox>
-            </UI.CbBox>
-          </UI.Modal>
-        } */}
-        
       </UI.Box>
     );
   };
@@ -342,10 +347,10 @@ class MenuOrderUI extends useMenuOrderLogic {
     const modifierCartItems = this.props.modifierCartItemData && this.props.modifierCartItemData?.find((values) => values?.Item_ID === item?.Item_ID);
     const modifierQuantity = modifierCartItems? modifierCartItems?.quantity : 0
     const commonStyles = (
-      isAvailable,
-      IsDisable,
-      primaryColor,
-      secondaryColor
+      isAvailable:number,
+      IsDisable:number,
+      primaryColor:string,
+      secondaryColor:string
     ) => {
       if (isAvailable === 1 && IsDisable === 0) {
         return primaryColor;
@@ -419,9 +424,9 @@ disabled={this.state.disabledItems[item.Item_ID] || item.IsAvailable !== 1 || it
   };
 
   render() {
-    const {isRecentOrderOpen,searchQuery,isSearchActive} = this.state
+    const {isRecentOrderOpen,isSearchActive} = this.state
     return (
-      <>
+      <UI.Box style={{flex:1}}>
     <UI.ConnectedCbBox id="MenuorderContainer" pageId={'MenuOrder'} style={styles.mainContainer}>
     <UI.ConnectedCbHeader navigation={this.props.navigation} goBack={() => this.props?.navigation.goBack()} headerTitle={"Menu Order"}/>
     <UI.ConnectedCbBox id="MainHeaderContainer" pageId={'MenuOrder'} style={styles.mainHeaderContainer}>
@@ -481,7 +486,32 @@ disabled={this.state.disabledItems[item.Item_ID] || item.IsAvailable !== 1 || it
         </UI.Box>
       }
     </UI.ConnectedCbBox>
-      </>   
+
+
+        {
+          this.props.itemDataVisible &&
+          <UI.Modal
+            visible={this.props.itemDataVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={this.props.closePreviewModal}
+          >
+              <UI.ConnectedCbBox id="ModalBackground" pageId="MenuOrder" style={styles.modalBackground}>
+          <UI.TouchableOpacity
+            onPress={() => this.handleCloseItemDetails()}
+            style={styles.crossIcon}
+          >
+            <UI.ConnectedCbBox id="CloseIconContainer" pageId="MenuOrder" style={styles.CloseIconContainer} >
+              <UI.ConnectedCbImage id="CloseIcon" pageId={'MenuOrder'} imageJsx={<Image source={require('@/assets/images/icons/Modal_Close.png')} style={styles.closeIcon} />} />
+            </UI.ConnectedCbBox>
+          </UI.TouchableOpacity>
+          <UI.ConnectedCbBox id="ModiferItems" pageId="MenuOrder" style={styles.modiferItems}>
+            {/* <ItemModifier isRecentOrder={false} /> */}
+          </UI.ConnectedCbBox>
+        </UI.ConnectedCbBox>
+          </UI.Modal>
+        }
+      </UI.Box>   
     );
   }
 }
@@ -492,14 +522,16 @@ const mapStateToProps = (state:RootState) => {
     menuOrderData:state.MenuOrder.menuOrderData,
     cartData:state.Cart.cartData,
     modifierCartItemData:state.Cart.modifierCartItemData,
-    isExitProfitCenter:state.MenuOrder.isExitProfitCenter
+    isExitProfitCenter:state.MenuOrder.isExitProfitCenter,
+    itemDataVisible:state.MenuOrder.itemDataVisible
   }
 }
 const mapDispatchToProps = {
   handleOnSearch,
   loadPageConfigurations,
   storeMenuOrderData,
-  openCartRemovePopup
+  openCartRemovePopup,
+  closePreviewModal
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MenuOrderUI)

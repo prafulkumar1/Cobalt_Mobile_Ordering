@@ -5,7 +5,8 @@ const initialState = {
     loginDetails : [],
     searchQuery:"",
     menuOrderData:null,
-    isExitProfitCenter:false
+    isExitProfitCenter:false,
+    itemDataVisible:false
 }
 
 
@@ -22,6 +23,9 @@ const menuOrderSlice = createSlice({
     },
     openCartRemovePopup(state, action) {
       state.isExitProfitCenter = !state.isExitProfitCenter
+    },
+    closePreviewModal(state, action) {
+      state.itemDataVisible = !state.itemDataVisible
     }
   },
 //   extraReducers: builder => {
@@ -40,5 +44,5 @@ const menuOrderSlice = createSlice({
 //   },
 })
 
-export const { handleOnSearch,storeMenuOrderData,openCartRemovePopup}:any = menuOrderSlice.actions
+export const { handleOnSearch,storeMenuOrderData,openCartRemovePopup,closePreviewModal}:any = menuOrderSlice.actions
 export default menuOrderSlice.reducer
